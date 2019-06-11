@@ -27,11 +27,17 @@ SOFTWARE.
 ******************************************************************************
 */
 
+//#undef HSE_VALUE
+//#define HSE_VALUE    ((uint32_t)8000000)
+
 /* Includes */
 #include "stm32f4xx.h"
 #include "stm32f4_discovery.h"
+//#include "stm32f4xx_usart.h"
 
 /* Private macro */
+#define NULL (void *)0
+
 /* Private variables */
 /* Private function prototypes */
 /* Private functions */
@@ -59,25 +65,58 @@ int main(void)
 
   /* TODO - Add your application code here */
 
-  /* Initialize LEDs */
-  STM_EVAL_LEDInit(LED3);
-  STM_EVAL_LEDInit(LED4);
-  STM_EVAL_LEDInit(LED5);
-  STM_EVAL_LEDInit(LED6);
+  GPIO_InitTypeDef usart3_gpio_init;
+  USART_InitTypeDef usart3_init;
 
-  /* Turn on LEDs */
-  STM_EVAL_LEDOn(LED3);
-  STM_EVAL_LEDOn(LED4);
-  STM_EVAL_LEDOn(LED5);
-  STM_EVAL_LEDOn(LED6);
+  // Enable clock for GPIOB
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+
+  GPIO_PinAFConfig(GPIOD, GPIO_PinSource8, GPIO_AF_USART3);
+  GPIO_PinAFConfig(GPIOD, GPIO_PinSource9, GPIO_AF_USART3);
+
+  // Initialize pins as alternating function
+  usart3_gpio_init.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9;
+  usart3_gpio_init.GPIO_Mode = GPIO_Mode_AF;
+  usart3_gpio_init.GPIO_OType = GPIO_OType_PP;
+  usart3_gpio_init.GPIO_PuPd = GPIO_PuPd_UP;
+  usart3_gpio_init.GPIO_Speed = GPIO_Speed_100MHz;
+  GPIO_Init(GPIOD, &usart3_gpio_init);
+
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
+
+  usart3_init.USART_BaudRate = 115200;
+  usart3_init.USART_WordLength = USART_WordLength_8b;
+  usart3_init.USART_StopBits = USART_StopBits_1;
+  usart3_init.USART_Parity = USART_Parity_No;
+  usart3_init.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+  usart3_init.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+
+  GPIO_Init(GPIOD, &usart3_gpio_init);
+  USART_Init(USART3, &usart3_init);
+  USART_Cmd(USART3, ENABLE);
 
   /* Infinite loop */
   while (1)
   {
 	i++;
+	printf("Hello, World!!\n\r");
+
   }
 }
 
+
+int _write(int fd, char *str, int len)
+{
+	if (fd != 1) return 0;
+
+	while (len)
+	{
+		if (str == NULL) return 0;
+		USART_SendData(USART3, *str++);
+		while (USART_GetFlagStatus(USART3, USART_FLAG_TC) == RESET);
+		--len;
+	}
+}
 
 /*
  * Callback used by stm32f4_discovery_audio_codec.c.
