@@ -33,9 +33,9 @@ PROJ_NAME = $(shell echo $(WD) | sed "s|$(PARWD)||g")
 
 # Assembler, Compiler and Linker flags and linker script settings
 LINKER_FLAGS=-lm -mthumb -mhard-float -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -Wl,--gc-sections -T$(LINK_SCRIPT) -static  -Wl,--start-group -lc -lm -Wl,--end-group -specs=nano.specs -specs=nosys.specs  -Wl,-cref "-Wl,-Map=$(BIN_DIR)/$(PROJ_NAME).map" -Wl,--defsym=malloc_getpagesize_P=0x1000
-LINK_SCRIPT="src/sys/stm32f4_flash.ld"
-ASSEMBLER_FLAGS=-c -g -O0 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mthumb -mhard-float -specs=nano.specs -D"STM32F4XX" -D"STM32F40XX" -D"USE_STDPERIPH_DRIVER" -D"HSE_VALUE=8000000" -x assembler-with-cpp  -Isrc -Isrc/sys -ILibraries/CMSIS/Include -ILibraries/Device/STM32F4xx/Include -ILibraries/STM32F4xx_StdPeriph_Driver/inc -ILibraries/glesk/inc
-COMPILER_FLAGS=-c -g -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -O0 -Wall -ffunction-sections -fdata-sections -mthumb -mhard-float -specs=nano.specs -D"STM32F4XX" -D"STM32F40XX" -D"USE_STDPERIPH_DRIVER" -D"HSE_VALUE=8000000"  -Isrc -Isrc/sys -ILibraries/CMSIS/Include -ILibraries/Device/STM32F4xx/Include -ILibraries/STM32F4xx_StdPeriph_Driver/inc -ILibraries/glesk/inc
+LINK_SCRIPT="stm32f4_flash.ld"
+ASSEMBLER_FLAGS=-c -g -O0 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mthumb -mhard-float -specs=nano.specs -D"STM32F4XX" -D"STM32F40XX" -D"USE_STDPERIPH_DRIVER" -D"HSE_VALUE=8000000" -x assembler-with-cpp  -Isrc -ILibraries/CMSIS/Include -ILibraries/Device/STM32F4xx/Include -ILibraries/STM32F4xx_StdPeriph_Driver/inc -ILibraries/glesk/inc
+COMPILER_FLAGS=-c -g -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -O0 -Wall -ffunction-sections -fdata-sections -mthumb -mhard-float -specs=nano.specs -D"STM32F4XX" -D"STM32F40XX" -D"USE_STDPERIPH_DRIVER" -D"HSE_VALUE=8000000"  -Isrc -ILibraries/CMSIS/Include -ILibraries/Device/STM32F4xx/Include -ILibraries/STM32F4xx_StdPeriph_Driver/inc -ILibraries/glesk/inc
 
 # Define output directory
 OBJECT_DIR = Debug
