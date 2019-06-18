@@ -39,8 +39,8 @@ int main(void)
 
 	while (1) {
 		uint16_t adc_val = adc1_read(ADC_Channel_9);
-		float voltage = 3.3 / 4096 * adc_val;
-		float temp = voltage / 2.02 * 100;
+		float voltage = 2.5 / 4096 * adc_val;
+		float temp = 100 - (124 / 2.5 * voltage);
 
 		printf("ADC: %d, VOLT: %d.%d TEMP: %d.%d C\n\r",
 				adc_val,
