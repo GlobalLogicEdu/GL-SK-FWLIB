@@ -1,3 +1,7 @@
 Release/
 Debug/
 /.metadata/
+/*/*.elf.launch
+
+# QtCreator data
+/qtc-*
