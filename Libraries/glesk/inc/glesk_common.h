@@ -16,10 +16,7 @@
 	#define PRINTF_UART_SPEED 115200
 #endif /* ifndef PRINTF_UART_SPEED */
 
-#define EX_FLASH_SPI_PORT   GLESK_SPI1
-#define EX_FLASH_CS_PIN     GPIO_Pin_7
-#define EX_FLASH_CS_PORT    GPIOD
-#define EX_FLASH_CS_PCLK    RCC_AHB1Periph_GPIOD
+#define EX_EEPROM_SIZE		256
 
 #define delay_ms(ms) {long i = HSE_VALUE / 1000 * ms; while (--i);}
 
