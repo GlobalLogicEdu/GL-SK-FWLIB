@@ -4,7 +4,7 @@
 #define EX_EEPROM_I2C_PORT			GLESK_I2C1
 #define EX_EEPROM_SLAVE_ADDR		0x50
 #define EX_EEPROM_PAGE_SIZE			8
-#define EX_EEPROM_PAGE_WR_DELAY_MS	5
+#define EX_EEPROM_PAGE_WR_DELAY_MS	6
 
 int ex_eeprom_init(void)
 {

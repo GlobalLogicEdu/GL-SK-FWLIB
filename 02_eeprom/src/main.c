@@ -16,8 +16,8 @@ int main(void)
 
 	printf("Read bytes from EEPROM: \n\r");
 	for (int i = 0; i < EX_EEPROM_SIZE; ++i) {
-		if (!(i % 8)) printf("\n\r");
 		printf("%x ", buff[i]);
+		if ((i % 8) == 7) printf("\n\r");
 	}
 
 	printf("\n\rEnd program\n\r");
