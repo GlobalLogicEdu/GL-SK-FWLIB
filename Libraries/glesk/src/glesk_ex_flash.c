@@ -10,6 +10,11 @@
 	#include <stdio.h>
 #endif /* ifdef EX_FLASH_DEBUG */
 
+#define EX_FLASH_SPI_PORT   GLESK_SPI1
+#define EX_FLASH_CS_PIN     GPIO_Pin_7
+#define EX_FLASH_CS_PORT    GPIOD
+#define EX_FLASH_CS_PCLK    RCC_AHB1Periph_GPIOD
+
 #define DUMMY	0x00	// Dummy byte
 #define RDB		0x03	// Read Memory at 25 MHz
 #define HSRD	0x0B	// Read Memory at 50 MHz
