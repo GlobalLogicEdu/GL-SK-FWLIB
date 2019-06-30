@@ -1,205 +1,276 @@
 #include "glesk_ex_flash.h"
 #include "glesk_spi.h"
+#include "stm32f4xx_gpio.h"
+#include "stm32f4xx_rcc.h"
 
-#define TEST
+// Uncomment to debug
+//#define EX_FLASH_DEBUG
 
-#ifdef TEST
-    #include <stdio.h>
-#endif /* ifdef TEST */
+#ifdef EX_FLASH_DEBUG
+	#include <stdio.h>
+#endif /* ifdef EX_FLASH_DEBUG */
 
-void Send_Byte(unsigned char out)
+#define DUMMY	0x00	// Dummy byte
+#define RDB		0x03	// Read Memory at 25 MHz
+#define HSRD	0x0B	// Read Memory at 50 MHz
+#define E4KB	0x20	// Erase 4 KByte of memory array
+#define E32KB	0x52	// Erase 32 KByte block of memory array
+#define E64KB	0xD8	// Erase 64 KByte block of memory array
+#define EALL	0x60	// Erase Full Memory Array
+#define PRB		0x02	// To Program One Data Byte
+#define AAIWP	0xAD	// Auto Address Increment Programming
+#define RDSR	0x05	// Read-Status-Register
+#define EWSR	0x50	// Enable-Write-Status-Register
+#define WRSR	0x01	// Write-Status-Register
+#define WREN	0x06	// Write-Enable
+#define WRDI	0x04	// Write-Disable
+#define RDID	0x90	// Read-ID
+#define JDID	0x9F	// JEDEC ID read
+#define EBSY	0x70	// Enable SO to output RY/BY# status during AAI programming
+#define DBSY	0x80	// Disable SO to output RY/BY# status during AAI programming
+
+#define BP0	0x04
+#define BP1	0x08
+#define BP2	0x10
+#define BP3	0x20
+
+#define MANUF_ID_ADDR	0x00
+#define DEV_ID_ADDR		0x01
+
+// Chip Select enable
+static void cs_enable()
 {
-    spi_w_byte(1, out);
+	GPIO_ResetBits(EX_FLASH_CS_PORT, EX_FLASH_CS_PIN);
 }
 
-unsigned char Get_Byte()
+// Chip Select disable
+static void cs_disable()
 {
-    return spi_r_byte(1);
+	GPIO_SetBits(EX_FLASH_CS_PORT, EX_FLASH_CS_PIN);
 }
 
-void CE_High()
+static void send_byte(u16 out)
 {
-    spi_slave_disable();
+	spi_w_byte(EX_FLASH_SPI_PORT, out);
 }
 
-void CE_Low()
+static u16 get_byte(void)
 {
-    spi_slave_enable();
+	return spi_r_byte(EX_FLASH_SPI_PORT);
 }
 
-unsigned char Read_Status_Register()
+// Read Status Register
+static u16 read_sr(void)
 {
-    unsigned char byte = 0;
-    CE_Low();			/* enable device */
-    Send_Byte(0x05);		/* send RDSR command */
-    byte = Get_Byte();		/* receive byte */
-    CE_High();			/* disable device */
-    return byte;
+	u16 byte = 0;
+
+	cs_enable();
+	send_byte(RDSR);
+	byte = get_byte();
+	cs_disable();
+
+	return byte;
 }
 
-// Enables Write Status Register
-void EWSR()
+// Write a byte to Status Register.
+static void write_sr(u8 byte)
 {
-    CE_Low();			/* enable device */
-    Send_Byte(0x50);		/* enable writing to the status register */
-    CE_High();			/* disable device */
+	cs_enable();
+	send_byte(EWSR);
+
+	// TODO: remove enable_disable here
+	cs_disable();
+	cs_enable();
+
+	// Write to Status Register
+	send_byte(WRSR);
+	send_byte(byte);
+	cs_disable();
 }
 
-// This procedure writes a byte to the Status Register.
-void WRSR(u8 byte)
+// Set write enable
+static void write_enable(void)
 {
-    CE_Low();			/* enable device */
-    Send_Byte(0x01);		/* select write to status register */
-    Send_Byte(byte);		/* data that will change the status of BPx
-                       or BPL (only bits 2,3,4,5,7 can be written) */
-    CE_High();			/* disable the device */
+	cs_enable();
+	send_byte(WREN);
+	cs_disable();
 }
 
-// This procedure enables the Write Enable Latch.
-void WREN()
+static void wait_busy(void)
 {
-    CE_Low();			/* enable device */
-    Send_Byte(0x06);		/* send WREN command */
-    CE_High();			/* disable device */
+	// Wait until not busy
+	while ((read_sr() & 0x03) == 0x03)
+		read_sr();
 }
 
-// This procedure disables the Write Enable Latch.
-void WRDI()
+// Read Manufacture or Device ID
+static u8 __attribute__((unused)) read_id(u8 id_addr)
 {
-    CE_Low();			/* enable device */
-    Send_Byte(0x04);		/* send WRDI command */
-    CE_High();			/* disable device */
+	u16 byte;
+
+	cs_enable();
+	send_byte(RDID);
+	send_byte(DUMMY);
+	send_byte(DUMMY);
+	send_byte(id_addr);
+	byte = get_byte();
+	cs_disable();
+
+	return byte;
 }
 
-unsigned char Read_ID(u8 ID_addr)
+static u8 read_byte(u32 addr)
 {
-    unsigned char byte;
-    CE_Low();			/* enable device */
-    Send_Byte(0x90);		/* send read ID command (90h or ABh) */
-    Send_Byte(0x00);		/* send address */
-    Send_Byte(0x00);		/* send address */
-    Send_Byte(ID_addr);		/* send address - either 00H or 01H */
-    byte = Get_Byte();		/* receive byte */
-    CE_High();			/* disable device */
-    return byte;
+	u8 byte = 0;
+
+	cs_enable();
+	send_byte(RDB);
+	send_byte(((addr & 0xFFFFFF) >> 16));
+	send_byte(((addr & 0xFFFF) >> 8));
+	send_byte(addr & 0xFF);
+	byte = get_byte();
+	cs_disable();
+
+	return byte;
 }
 
-unsigned char Read(unsigned long Dst)
+static void write_byte(u32 addr, u8 byte)
 {
-    unsigned char byte = 0;
-
-    CE_Low();			/* enable device */
-    Send_Byte(0x03); 		/* read command */
-    Send_Byte(((Dst & 0xFFFFFF) >> 16));	/* send 3 address bytes */
-    Send_Byte(((Dst & 0xFFFF) >> 8));
-    Send_Byte(Dst & 0xFF);
-    byte = Get_Byte();
-    CE_High();			/* disable device */
-    return byte;			/* return one byte read */
-}
-
-void Byte_Program(unsigned long Dst, unsigned char byte)
-{
-    CE_Low();				/* enable device */
-    Send_Byte(0x02); 			/* send Byte Program command */
-    Send_Byte(((Dst & 0xFFFFFF) >> 16));	/* send 3 address bytes */
-    Send_Byte(((Dst & 0xFFFF) >> 8));
-    Send_Byte(Dst & 0xFF);
-    Send_Byte(byte);			/* send byte to be programmed */
-    CE_High();				/* disable device */
-}
-
-void Chip_Erase()
-{
-    CE_Low();				/* enable device */
-    Send_Byte(0x60);			/* send Chip Erase command (60h or C7h) */
-    CE_High();				/* disable device */
-}
-
-void Sector_Erase(unsigned long Dst)
-{
-    CE_Low();				/* enable device */
-    Send_Byte(0x20);			/* send Sector Erase command */
-    Send_Byte(((Dst & 0xFFFFFF) >> 16)); 	/* send 3 address bytes */
-    Send_Byte(((Dst & 0xFFFF) >> 8));
-    Send_Byte(Dst & 0xFF);
-    CE_High();				/* disable device */
-}
-
-void Block_Erase_32K(unsigned long Dst)
-{
-    CE_Low();				/* enable device */
-    Send_Byte(0x52);			/* send 32 KByte Block Erase command */
-    Send_Byte(((Dst & 0xFFFFFF) >> 16)); 	/* send 3 address bytes */
-    Send_Byte(((Dst & 0xFFFF) >> 8));
-    Send_Byte(Dst & 0xFF);
-    CE_High();				/* disable device */
-}
-
-void Block_Erase_64K(unsigned long Dst)
-{
-    CE_Low();				/* enable device */
-    Send_Byte(0xD8);			/* send 64KByte Block Erase command */
-    Send_Byte(((Dst & 0xFFFFFF) >> 16)); 	/* send 3 address bytes */
-    Send_Byte(((Dst & 0xFFFF) >> 8));
-    Send_Byte(Dst & 0xFF);
-    CE_High();				/* disable device */
-}
-
-void Wait_Busy()
-{
-    while ((Read_Status_Register() & 0x03) == 0x03)	/* waste time until not busy */
-        Read_Status_Register();
+	write_enable();
+	cs_enable();
+	send_byte(PRB);
+	send_byte(((addr & 0xFFFFFF) >> 16));
+	send_byte(((addr & 0xFFFF) >> 8));
+	send_byte(addr & 0xFF);
+	send_byte(byte);
+	cs_disable();
 }
 
 int ex_flash_init(void)
 {
-    spi_init(1);
-#ifdef TEST
-    printf("Manufacture id: %x\n\r", Read_ID(0));
-    printf("Device id: %x\n\r", Read_ID(1));
+	GPIO_InitTypeDef  ex_flash_gpio_init;
+	u8 sr;
 
-    printf("Read 0x00 before erasing: %x\n\r", Read(0x00));
-    printf("Read 0x01 before erasing: %x\n\r", Read(0x01));
+	// Init SPI port for external flash
+	spi_init(EX_FLASH_SPI_PORT);
 
-    printf("Status register: %x\n\r", Read_Status_Register());
+	// Init CS pin
+	ex_flash_gpio_init.GPIO_Mode = GPIO_Mode_OUT;
+	ex_flash_gpio_init.GPIO_Speed = GPIO_Speed_100MHz;
+	ex_flash_gpio_init.GPIO_OType = GPIO_OType_PP;
+	ex_flash_gpio_init.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+	ex_flash_gpio_init.GPIO_Pin = EX_FLASH_CS_PIN;
 
-    WREN();
-    Read_Status_Register();
-    EWSR();
-    WRSR(0x10);
-    Read_Status_Register();
+	RCC_AHB1PeriphClockCmd(EX_FLASH_CS_PCLK, ENABLE);
+	GPIO_Init(EX_FLASH_CS_PORT, &ex_flash_gpio_init);
 
-    printf("Status register after clear protection: %x\n\r", Read_Status_Register());
+	cs_disable();
 
-    WREN();
-    Sector_Erase(0x00);
-    Wait_Busy();
+#ifdef EX_FLASH_DEBUG
+	printf("Manufacture id: %x\n\r", read_id(MANUF_ID_ADDR));
+	printf("Device id: %x\n\r", read_id(DEV_ID_ADDR));
 
-    printf("Read 0x00 after erasing: %x\n\r", Read(0x00));
-    printf("Read 0x01 after erasing: %x\n\r", Read(0x01));
+	printf("Read 0x00 before erasing: %x\n\r", read_byte(0x00));
+	printf("Read 0x01 before erasing: %x\n\r", read_byte(0x01));
 
-    WREN();
-    Byte_Program(0x00, 0xab);
-    Wait_Busy();
+	printf("Status register: %x\n\r", read_sr());
 
-    WREN();
-    Byte_Program(0x01, 0xcd);
-    Wait_Busy();
+#endif /* #ifdef EX_FLASH_DEBUG */
 
-    printf("Read 0x00 after writing: %x\n\r", Read(0x00));
-    printf("Read 0x01 after writing: %x\n\r", Read(0x01));
-#endif /* ifdef TEST */
+	// Disable write protection
+	write_enable();
+	sr = read_sr();
+	sr &= ~(BP0 | BP1 | BP2 | BP3);
+	write_sr(sr);
 
-    return 0;
+#ifdef EX_FLASH_DEBUG
+	read_sr();
+
+	printf("Status register after clear protection: %x\n\r", read_sr());
+
+	ex_flash_erase_sector(0x00);
+	wait_busy();
+
+	printf("Read 0x00 after erasing: %x\n\r", read_byte(0x00));
+	printf("Read 0x01 after erasing: %x\n\r", read_byte(0x01));
+
+	write_byte(0x00, 0xab);
+	wait_busy();
+
+	write_byte(0x01, 0xcd);
+	wait_busy();
+
+	printf("Read 0x00 after writing: %x\n\r", read_byte(0x00));
+	printf("Read 0x01 after writing: %x\n\r", read_byte(0x01));
+#endif /* ifdef EX_FLASH_DEBUG */
+
+	return 0;
 }
 
-int ex_flash_read(u8 *data, ssize_t len)
+int ex_flash_read(u32 addr, u8 *data, ssize_t len)
 {
-    return -1;
+	if (!data) return -1;
+
+	for (u32 i = 0; i < len; ++i) {
+		data[i] = read_byte(addr + i);
+	}
+
+	return len;
 }
 
-int ex_flash_write(const u8 *data, ssize_t len)
+int ex_flash_write(u32 addr, const u8 *data, ssize_t len)
 {
-    return -1;
+	if (!data) return -1;
+
+	for (u32 i = 0; i < len; ++i) {
+		write_byte(addr + i, data[i]);
+	}
+	wait_busy();
+
+	return len;
+}
+
+void ex_flash_erase_sector(u32 addr)
+{
+	write_enable();
+	cs_enable();
+	send_byte(E4KB);
+	send_byte(((addr & 0xFFFFFF) >> 16));
+	send_byte(((addr & 0xFFFF) >> 8));
+	send_byte(addr & 0xFF);
+	cs_disable();
+	wait_busy();
+}
+
+void ex_flash_erase_block_32k(u32 addr)
+{
+	write_enable();
+	cs_enable();
+	send_byte(E32KB);
+	send_byte(((addr & 0xFFFFFF) >> 16));
+	send_byte(((addr & 0xFFFF) >> 8));
+	send_byte(addr & 0xFF);
+	cs_disable();
+	wait_busy();
+}
+
+void ex_flash_erase_block_64k(u32 addr)
+{
+	write_enable();
+	cs_enable();
+	send_byte(E64KB);
+	send_byte(((addr & 0xFFFFFF) >> 16));
+	send_byte(((addr & 0xFFFF) >> 8));
+	send_byte(addr & 0xFF);
+	cs_disable();
+	wait_busy();
+}
+
+void ex_flash_erase_chip(void)
+{
+	write_enable();
+	cs_enable();
+	send_byte(EALL);
+	cs_disable();
+	wait_busy();
 }
