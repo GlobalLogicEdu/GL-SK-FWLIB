@@ -79,36 +79,46 @@ int spi_init(uint8_t spi_num)
 	return 0;
 }
 
-void spi_w_byte(uint8_t spi_num, uint8_t byte)
+int spi_read(u8 spi_num, u8 *data, ssize_t len)
 {
-	SPI_I2S_SendData(spi[spi_num].base, byte);
+	if (!data) return -1;
 
-	// Wait until byte will be transmitted
-	while (SPI_I2S_GetFlagStatus(spi[spi_num].base, SPI_I2S_FLAG_TXE) == RESET);
-	while (SPI_I2S_GetFlagStatus(spi[spi_num].base, SPI_I2S_FLAG_BSY) == SET);
+	for (u32 i = 0; i < len; ++i) {
+		// Check if we already have some data in Rx buffer
+		if (SPI_I2S_GetFlagStatus(spi[spi_num].base, SPI_I2S_FLAG_RXNE) == SET) {
+			data[i] = SPI_I2S_ReceiveData(spi[spi_num].base);
+			continue;
+		}
 
-	// Flush Rx
-	while (SPI_I2S_GetFlagStatus(spi[spi_num].base, SPI_I2S_FLAG_RXNE) == SET)
-		SPI_I2S_ReceiveData(spi[spi_num].base);
+		// Send dummy to continue receiving data
+		do {
+			SPI_I2S_SendData(spi[spi_num].base, 0);
+			while (SPI_I2S_GetFlagStatus(spi[spi_num].base, SPI_I2S_FLAG_BSY) == SET);
+		} while (SPI_I2S_GetFlagStatus(spi[spi_num].base, SPI_I2S_FLAG_RXNE) == RESET);
+
+		data[i] = SPI_I2S_ReceiveData(spi[spi_num].base);
+	}
+
+	return len;
 }
 
-uint8_t spi_r_byte(uint8_t spi_num)
+int spi_write(u8 spi_num, const u8 *data, ssize_t len)
 {
-	// Send dummy to continue receiving data
-	do {
-		SPI_I2S_SendData(spi[spi_num].base, 0);
+	if (!data) return -1;
+
+	for (u32 i = 0; i < len; ++i) {
+		SPI_I2S_SendData(spi[spi_num].base, data[i]);
+
+		// Wait until byte will be transmitted
+		while (SPI_I2S_GetFlagStatus(spi[spi_num].base, SPI_I2S_FLAG_TXE) == RESET);
 		while (SPI_I2S_GetFlagStatus(spi[spi_num].base, SPI_I2S_FLAG_BSY) == SET);
-	} while (SPI_I2S_GetFlagStatus(spi[spi_num].base, SPI_I2S_FLAG_RXNE) == RESET);
 
-	return SPI_I2S_ReceiveData(spi[spi_num].base);
-}
+		// Flush Rx buffer after send first byte of data
+		if (i == 0) {
+			while (SPI_I2S_GetFlagStatus(spi[spi_num].base, SPI_I2S_FLAG_RXNE) == SET)
+				SPI_I2S_ReceiveData(spi[spi_num].base);
+		}
+	}
 
-int spi_read(u8 spi_num, u8 slave_addr, u8 reg_addr, u8 *data, ssize_t len)
-{
-	return -1;
-}
-
-int spi_write(u8 spi_num, u8 slave_addr, u8 reg_addr, const u8 *data, ssize_t len)
-{
-	return -1;
+	return len;
 }

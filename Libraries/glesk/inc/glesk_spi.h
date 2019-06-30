@@ -12,12 +12,7 @@ enum {
 };
 
 int spi_init(uint8_t spi_num);
-int spi_read(u8 spi_num, u8 slave_addr, u8 reg_addr, u8 *data, ssize_t len);
-int spi_write(u8 spi_num, u8 slave_addr, u8 reg_addr, const u8 *data, ssize_t len);
-
-void spi_w_byte(uint8_t spi_num, uint8_t byte);
-uint8_t spi_r_byte(uint8_t spi_num);
-void SPIx_EnableSlave(void);
-void SPIx_DisableSlave(void);
+int spi_read(u8 spi_num, u8 *data, ssize_t len);
+int spi_write(u8 spi_num, const u8 *data, ssize_t len);
 
 #endif /* ifndef __GL_ESK_SPI_ */

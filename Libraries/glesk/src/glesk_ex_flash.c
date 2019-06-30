@@ -49,14 +49,16 @@ static void cs_disable()
 	GPIO_SetBits(EX_FLASH_CS_PORT, EX_FLASH_CS_PIN);
 }
 
-static void send_byte(u16 out)
+static void send_byte(u8 out)
 {
-	spi_w_byte(EX_FLASH_SPI_PORT, out);
+	spi_write(EX_FLASH_SPI_PORT, &out, 1);
 }
 
-static u16 get_byte(void)
+static u8 get_byte(void)
 {
-	return spi_r_byte(EX_FLASH_SPI_PORT);
+	u8 out;
+	spi_read(EX_FLASH_SPI_PORT, &out, 1);
+	return out;
 }
 
 // Read Status Register
