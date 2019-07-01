@@ -18,6 +18,7 @@
 
 #define EX_EEPROM_SIZE		256
 
+#define delay_us(us) {u32 i = us * (HSE_VALUE / 2 / 1000000); while (--i);}
 #define delay_ms(ms) {u32 i = ms * (HSE_VALUE / 2 / 1000); while (--i);}
 
 #endif /* ifndef __GL_ESK_COMMON__ */
