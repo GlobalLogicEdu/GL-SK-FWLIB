@@ -68,9 +68,18 @@
 /*-------------------------------------------------------------------------------*/
 
 /*-----------------------------------CAN PINOUT-----------------------------------*/
-#define CAN_PORT		GPIOD
-#define CAN_RX			GPIO_Pin_0
-#define CAN_TX			GPIO_Pin_1
+#define CAN1_PORT		GPIOD
+#define CAN1_RX			GPIO_Pin_0
+#define CAN1_TX			GPIO_Pin_1
+#define CAN1_RX_AF		GPIO_PinSource0
+#define CAN1_TX_AF		GPIO_PinSource1
+
+
+#define CAN2_PORT		GPIOD
+#define CAN2_RX			GPIO_Pin_0
+#define CAN2_TX			GPIO_Pin_1
+#define CAN2_RX_AF		GPIO_PinSource0
+#define CAN2_TX_AF		GPIO_PinSource1
 /*-------------------------------------------------------------------------------*/
 
 

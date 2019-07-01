@@ -12,6 +12,7 @@ volatile uint32_t timing_dalay;
 void setup_clock_to_168MHz(void);
 
 void delay_milis1(uint32_t milisecond);
+
 void delay_milis(uint32_t microsecond);
 
 void setup_clock_for_GPIO(GPIO_TypeDef* GPIOx, FunctionalState state);
