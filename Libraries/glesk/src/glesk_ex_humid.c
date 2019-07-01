@@ -6,6 +6,7 @@
 #define EX_HUMID_PORT	GPIOD
 #define EX_HUMID_PCLK	RCC_AHB1Periph_GPIOD
 #define EX_HUMID_MODE	GPIO_MODER_MODER11
+#define EX_HUMID_DAT_SZ	5
 
 int ex_humid_init(void)
 {
@@ -23,14 +24,14 @@ int ex_humid_init(void)
 	return 0;
 }
 
-int ex_humid_read(u8 *data, ssize_t len)
+int ex_humid_read(u8 *humid, u8 *temp)
 {
 	u8 got_response = 0;
 	u8 bit_iter;
 	u8 byte_iter;
-	u8 byte;
+	u8 data[EX_HUMID_DAT_SZ] = {0};
 
-	if (!data || len < 5) return -1;
+	if (!temp || !humid) return -1;
 
 	GPIO_ResetBits(EX_HUMID_PORT, EX_HUMID_PIN);
 	delay_us(22000);	// wait for 20ms
@@ -50,22 +51,24 @@ int ex_humid_read(u8 *data, ssize_t len)
 	if (!got_response) return -1;
 
 	for (byte_iter = 0; byte_iter < 5; ++byte_iter) {
-		byte = 0;
 		for (bit_iter = 0; bit_iter < 8; ++bit_iter) {
 			// Wait for high
 			while (!(GPIO_ReadInputDataBit(EX_HUMID_PORT, EX_HUMID_PIN)));
 			delay_us(40);   // wait for 30us
 
 			// If low then it is zero bit
-			byte = (byte << 1) | GPIO_ReadInputDataBit(EX_HUMID_PORT, EX_HUMID_PIN);
+			data[byte_iter] = (data[byte_iter] << 1) |
+					GPIO_ReadInputDataBit(EX_HUMID_PORT, EX_HUMID_PIN);
 
 			// Wait for low
 			while (GPIO_ReadInputDataBit(EX_HUMID_PORT, EX_HUMID_PIN));
 		}
-		data[byte_iter] = byte;
 	}
 
 	if (data[4] != (u8)(data[3] + data[2] + data[1] + data[0])) return -1;
+
+	*humid = data[0];
+	*temp = data[2];
 
 	return 0;
 }
