@@ -18,5 +18,7 @@ void CAN_transmit_data(void);
 
 void CAN_receive_data(void);
 
+void CAN_example(void);
+
 
 #endif /* DRIVERS_CAN_BUS_H_ */

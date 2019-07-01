@@ -128,7 +128,7 @@ void USART3_IRQHandler(void)
 	}
 }
 
-void CAN2_RX0_IRQHandler(void)
+void CAN1_RX0_IRQHandler(void)
 {
 	CanRxMsg RxMessage;
 	memset(&RxMessage, 0, sizeof(RxMessage));
@@ -148,7 +148,7 @@ void CAN2_RX0_IRQHandler(void)
 			}
 			if (RxMessage.StdId == CAN_MASSEGE_ID_RESP)
 			{
-				event_signal(LED_PORT, LED_PINS);
+				GPIO_ToggleBits(LED_PORT, LED_PINS);
 			}
 		}
 	}
