@@ -1,6 +1,7 @@
 #ifndef __GL_ESK_COMMON__
 #define __GL_ESK_COMMON__
 
+#include <sys/types.h>
 #include "stm32f4xx.h"
 
 #ifndef NULL
@@ -15,6 +16,8 @@
 	#define PRINTF_UART_SPEED 115200
 #endif /* ifndef PRINTF_UART_SPEED */
 
-#define delay_ms(ms) {long i = HSE_VALUE / 1000 * ms; while (--i);}
+#define EX_EEPROM_SIZE		256
+
+#define delay_ms(ms) {u32 i = ms * (HSE_VALUE / 2 / 1000); while (--i);}
 
 #endif /* ifndef __GL_ESK_COMMON__ */
