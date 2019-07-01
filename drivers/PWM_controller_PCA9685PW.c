@@ -1,6 +1,8 @@
 #include "PWM_controller_PCA9685PW.h"
 #include "LEDs.h"
+#include "DISPLAY_WH1602B_4Bit.h"
 
+static char empty_field[] = "                                ";
 static uint8_t default_mode1;
 
 void PCA_Init(PCA9685_Data data)
@@ -34,7 +36,6 @@ void PCA_awake(void)
 	I2C_transmit_byte_to_reg(PCA_I2C_PERIPH, PCA_SLAVE_ADDRESS, PCA9685__MODE1, default_mode1);
 	I2C_transmit_byte_to_reg(PCA_I2C_PERIPH, PCA_SLAVE_ADDRESS, PCA9685__MODE1, default_mode1 | PCA_MODE1_RESTART_ENABLE  | PCA_MODE1_ALLCALL_ENABLE);
 	/*************************/
-
 }
 
 void PCA_set_state(FunctionalState state)
@@ -116,7 +117,7 @@ void PCA_get_data_for_channel(uint8_t channel, PCA9685_Data *data)
 void PCA_servo_example(void)
 {
 	setup_clock_to_168MHz();
-	setup_I2C(I2C1);
+	setup_I2C(PCA_I2C_PERIPH);
 	PCA9685_Data pca_data;
 	Servo servo;
 	servo.pwm_frequency = 50; // f=50Hz T=20ms
@@ -145,4 +146,61 @@ void PCA_servo_example(void)
 
 }
 
+void PCA_servo_example2(void)
+{
+	setup_clock_to_168MHz();
+	setup_I2C(I2C1);
+
+	Display_init_GPIO();
+	Display_Init();
+
+	char buff[31];
+	char *header = "angle = ";
+	uint8_t header_len = strlen(header);
+
+	Display_clear();
+	Display_Write_srt(header ,header_len, 0, 0);
+
+	PCA9685_Data pca_data;
+	Servo servo;
+	servo.pwm_frequency = 50; // f=50Hz T=20ms
+	servo.min_angle = 0;
+	servo.max_angle = 180;
+	servo.impuls_duration_for_MIN_angle = 0.0005;	// 0.5ms	2.5% duty cycle
+	servo.impuls_duration_for_MAX_angle = 0.0025;	// 2.5ms	10% duty cycle
+	PCA_fill_data_for_servo(&pca_data, servo, 0);
+	PCA_Init(pca_data);
+	uint32_t cycles = 100;
+
+	while(cycles)
+	{
+		uint16_t angle = 0;
+		while(angle < servo.max_angle)
+		{
+			Display_Write_Ins(GO_TO_START_FIRST_LINE + header_len);
+			sprintf(buff, "%u%c", angle,0xEF);
+
+			PCA_fill_data_for_servo(&pca_data, servo, angle+=10);
+			PCA_set_data_for_channel(PCA9685_CHANNEL0, pca_data);
+
+			Display_Write_Data_Array(buff ,strlen(buff));
+			Display_Write_Data_Array(empty_field ,strlen(buff)); //clear field
+			delay_milis(500);
+		}
+		while(angle > servo.min_angle)
+		{
+			Display_Write_Ins(GO_TO_START_FIRST_LINE + header_len);
+			sprintf(buff, "%u%c", angle, 0xEF);
+
+			PCA_fill_data_for_servo(&pca_data, servo, angle-=10);
+			PCA_set_data_for_channel(PCA9685_CHANNEL0, pca_data);
+
+			Display_Write_Data_Array(buff ,strlen(buff));
+			Display_Write_Data_Array(empty_field ,strlen(buff)); //clear field
+			delay_milis(500);
+
+		}
+	}
+
+}
 

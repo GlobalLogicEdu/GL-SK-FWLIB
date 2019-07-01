@@ -106,3 +106,14 @@ void setup_pinout_for_I2C(I2C_TypeDef *I2Cx)
 	}
 }
 
+void setup_pinout_for_CAN(CAN_TypeDef *CANx)
+{
+	GPIO_InitTypeDef CAN_GPIO;
+	CAN_GPIO.GPIO_OType = GPIO_OType_OD;
+	CAN_GPIO.GPIO_PuPd 	= GPIO_PuPd_UP;
+	CAN_GPIO.GPIO_Speed	= GPIO_Speed_50MHz;
+	CAN_GPIO.GPIO_Mode 	= GPIO_Mode_AF;
+
+
+}
+

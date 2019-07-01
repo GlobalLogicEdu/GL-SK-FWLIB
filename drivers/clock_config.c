@@ -1,5 +1,5 @@
 #include "clock_config.h"
-//static RCC_ClocksTypeDef RCC_Clocks;
+static RCC_ClocksTypeDef RCC_Clocks;
 
 void setup_clock_to_168MHz(void)
 {
@@ -14,9 +14,9 @@ void setup_clock_to_168MHz(void)
 	RCC_PLLCmd(ENABLE);
 	/*SysTick config*/
 
-	RCC_ClocksTypeDef RCC_Clocks;
-	RCC_GetClocksFreq(&RCC_Clocks);
-	SysTick_Config(RCC_Clocks.HCLK_Frequency / 1000);
+//	RCC_ClocksTypeDef RCC_Clocks;
+//	RCC_GetClocksFreq(&RCC_Clocks);
+//	SysTick_Config(RCC_Clocks.HCLK_Frequency / 1000);
 
 	/*SysTick config*/
 }
@@ -29,14 +29,16 @@ void delay_milis1(uint32_t milisecond)
 //	while(timing_dalay--);
 }
 
-void delay_milis(uint32_t microsecond)
+void delay_milis(uint32_t milisecond)
 {
 //	RCC_GetClocksFreq(&RCC_Clocks);
 //	timing_dalay = RCC_Clocks.HCLK_Frequency/10000000 * microsecond;
 //	while(timing_dalay--);
-	timing_dalay = microsecond;
-	while(timing_dalay);
-
+//	timing_dalay = microsecond;
+//	while(timing_dalay);
+	RCC_GetClocksFreq(&RCC_Clocks);
+	timing_dalay = RCC_Clocks.HCLK_Frequency/10000 * milisecond;
+	while(timing_dalay--);
 }
 
 void setup_clock_for_GPIO(GPIO_TypeDef* GPIOx, FunctionalState state)
@@ -155,4 +157,17 @@ void setup_clock_for_TIMERs(TIM_TypeDef *TIMx, FunctionalState state)
 			break;
 	}
 
+}
+
+void setup_clock_for_CAN(CAN_TypeDef *CANx, FunctionalState state)
+{
+	switch ((int)CANx) {
+		case (int)CAN1:
+			RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, state); //APB1
+			break;
+		case (int)CAN2:
+			RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN2, state); //APB1
+		default:
+			break;
+	}
 }

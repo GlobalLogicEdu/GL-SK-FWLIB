@@ -67,8 +67,15 @@
 #define I2C3_SCL_AF		GPIO_PinSource8		//port A (Alternative Function)
 /*-------------------------------------------------------------------------------*/
 
+/*-----------------------------------CAN PINOUT-----------------------------------*/
+#define CAN_PORT		GPIOD
+#define CAN_RX			GPIO_Pin_0
+#define CAN_TX			GPIO_Pin_1
+/*-------------------------------------------------------------------------------*/
+
 
 void setup_pinout_for_USART(USART_TypeDef *USARTx);
 void setup_pinout_for_I2C(I2C_TypeDef *USARTx);
+void setup_pinout_for_CAN(CAN_TypeDef *CANx);
 
 #endif /* DRIVERS_PERIPHERAL_PINOUT_H_ */

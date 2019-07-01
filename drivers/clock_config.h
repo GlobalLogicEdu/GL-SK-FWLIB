@@ -22,4 +22,6 @@ void setup_clock_for_TIMERs(TIM_TypeDef *TIMx, FunctionalState state);
 
 void setup_clock_for_I2C(I2C_TypeDef *I2Cx, FunctionalState state);
 
+void setup_clock_for_CAN(CAN_TypeDef *CANx, FunctionalState state);
+
 #endif /* DRIVERS_CLOCK_CONFIG_H_ */
