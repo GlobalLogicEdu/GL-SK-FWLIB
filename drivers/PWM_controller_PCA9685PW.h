@@ -168,6 +168,7 @@ typedef struct servo_parameters
 
 } Servo;
 
+void PCA_servo_example2(void);
 
 void PCA_servo_example(void);
 

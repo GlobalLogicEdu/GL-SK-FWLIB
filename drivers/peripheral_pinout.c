@@ -106,3 +106,32 @@ void setup_pinout_for_I2C(I2C_TypeDef *I2Cx)
 	}
 }
 
+void setup_pinout_for_CAN(CAN_TypeDef *CANx)
+{
+	GPIO_InitTypeDef CAN_GPIO;
+	CAN_GPIO.GPIO_OType = GPIO_OType_OD;
+	CAN_GPIO.GPIO_PuPd 	= GPIO_PuPd_UP;
+	CAN_GPIO.GPIO_Speed	= GPIO_Speed_50MHz;
+	CAN_GPIO.GPIO_Mode 	= GPIO_Mode_AF;
+	switch ((int)CANx) {
+		case (int)CAN1:
+				CAN_GPIO.GPIO_Pin = CAN1_TX | CAN1_RX;
+			setup_clock_for_GPIO(CAN1_PORT, ENABLE);
+			GPIO_Init(CAN1_PORT, &CAN_GPIO);
+			GPIO_PinAFConfig(CAN1_PORT, CAN1_TX_AF, GPIO_AF_CAN1);
+			GPIO_PinAFConfig(CAN1_PORT, CAN1_RX_AF, GPIO_AF_CAN1);
+			break;
+		case (int) CAN2:
+			CAN_GPIO.GPIO_Pin = CAN2_TX | CAN2_RX;
+			setup_clock_for_GPIO(CAN1_PORT, ENABLE);
+			GPIO_Init(CAN2_PORT, &CAN_GPIO);
+			GPIO_PinAFConfig(CAN2_PORT, CAN2_TX_AF, GPIO_AF_CAN1);
+			GPIO_PinAFConfig(CAN2_PORT, CAN2_RX_AF, GPIO_AF_CAN1);
+			break;
+		default:
+			break;
+	}
+
+
+}
+

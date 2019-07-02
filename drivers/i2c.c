@@ -23,8 +23,8 @@ void setup_I2C(I2C_TypeDef* I2Cx)
 
 	I2C_AnalogFilterCmd(I2Cx, ENABLE);
 	I2C_DeInit(I2Cx);
-	I2C_Cmd(I2Cx, ENABLE);
 	I2C_Init(I2Cx, &i2c_InitStructure);
+	I2C_Cmd(I2Cx, ENABLE);
 
 }
 
@@ -90,7 +90,7 @@ void I2C_receive_byte(I2C_TypeDef* I2Cx,uint8_t address, uint8_t *data)
 
 void I2C_receive_byte_from_reg(I2C_TypeDef* I2Cx,uint8_t address, uint8_t reg, uint8_t *data)
 {
-	I2C_AcknowledgeConfig(I2C1, ENABLE);
+	I2C_AcknowledgeConfig(I2Cx, ENABLE);
 	I2C_GenerateSTART(I2Cx, ENABLE);
 	while (!I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_MODE_SELECT)){}
 
@@ -107,13 +107,13 @@ void I2C_receive_byte_from_reg(I2C_TypeDef* I2Cx,uint8_t address, uint8_t reg, u
 	while (!I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED)){}
 
 	I2C_NACKPositionConfig(I2Cx, I2C_NACKPosition_Current);
-	I2C_AcknowledgeConfig(I2C1, DISABLE);
+	I2C_AcknowledgeConfig(I2Cx, DISABLE);
 
 	while (!I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_BYTE_RECEIVED)){}
 	*data = I2C_ReceiveData(I2Cx);
 
 	I2C_GenerateSTOP(I2Cx,ENABLE);
-	while (I2C_GetFlagStatus(I2C1, I2C_FLAG_STOPF));
+	while (I2C_GetFlagStatus(I2Cx, I2C_FLAG_STOPF));
 }
 
 void I2C_receive_byte_array_from_reg(I2C_TypeDef* I2Cx, uint8_t address, uint8_t reg, uint8_t *array, uint16_t size)
