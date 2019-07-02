@@ -16,7 +16,6 @@ void PCA_Init(PCA9685_Data data)
 void PCA_reset(void)
 {
 	I2C_transmit_byte_to_reg(PCA_I2C_PERIPH, PCA_SLAVE_ADDRESS, PCA9685__MODE1, 0x0);
-	delay_milis1(5);
 }
 
 void PCA_sleep(void)
@@ -27,7 +26,6 @@ void PCA_sleep(void)
 	new_mode1 = (default_mode1&(~PCA_MODE1_RESTART_ENABLE)) | PCA_MODE1_SLEEP_LOW_PWR;
 	I2C_transmit_byte_to_reg(PCA_I2C_PERIPH, PCA_SLAVE_ADDRESS, PCA9685__MODE1, new_mode1);
 	/***************************/
-	delay_milis1(5);
 }
 
 void PCA_awake(void)
@@ -116,7 +114,7 @@ void PCA_get_data_for_channel(uint8_t channel, PCA9685_Data *data)
 
 void PCA_servo_example(void)
 {
-	setup_clock_to_168MHz();
+	setup_clock();
 	setup_I2C(PCA_I2C_PERIPH);
 	PCA9685_Data pca_data;
 	Servo servo;
@@ -148,7 +146,7 @@ void PCA_servo_example(void)
 
 void PCA_servo_example2(void)
 {
-	setup_clock_to_168MHz();
+	setup_clock();
 	setup_I2C(I2C1);
 
 	Display_init_GPIO();

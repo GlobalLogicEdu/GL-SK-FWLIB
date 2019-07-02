@@ -4,6 +4,8 @@
 
 #include "stm32f4xx.h"
 
+//void TimingDelay_Decrement(void);
+
 void USART3_IRQHandler(void);
 
 void EXTI0_IRQHandler(void);

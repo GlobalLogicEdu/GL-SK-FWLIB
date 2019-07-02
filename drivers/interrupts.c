@@ -7,11 +7,6 @@
 
 volatile uint32_t usart3_buffer_iterrator;
 
-void SysTick_Handler(void)
-{
-/*  TimingDelay_Decrement(); */
-	if(timing_dalay) timing_dalay--;
-}
 
 void EXTI0_IRQHandler(void)
 {

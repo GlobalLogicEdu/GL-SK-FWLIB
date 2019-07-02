@@ -9,7 +9,7 @@
 
 volatile uint32_t timing_dalay;
 
-void setup_clock_to_168MHz(void);
+void setup_clock(void);
 
 void delay_milis1(uint32_t milisecond);
 

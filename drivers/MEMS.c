@@ -221,8 +221,9 @@ void MEMS_example(void)
 
 void MEMS_example_with_menu(void)
 {
-	Init_ONBOARD_BUTTONs();
 	setup_Display();
+	Init_ONBOARD_BUTTONs();
+
 	char MEMS_modes_list[3][16] = {"ACCELEROMETER", "GYROSCOPE", "MAGNETOMETER"};
 	char MEMS_axises_list[4][16] = {"Only X", "Only Y", "Only Z", "All axises"};
 	Display_Write_Ins(GO_TO_START_FIRST_LINE);
